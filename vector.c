@@ -2,6 +2,7 @@
  *
  * Implementation of vector operations
  *
+ *
  * Author: Jaffar Mahkamov
  * Date: 9/29/25
  */
@@ -17,7 +18,7 @@ vect add(vect a, vect b) {
     return result;
 }
 
-vect subtract(vect a, vect b) {
+vect subtract(vect a, vect b){
     vect result = { "", {0,0,0}, 1 };
     result.comp[0] = a.comp[0] - b.comp[0];
     result.comp[1] = a.comp[1] - b.comp[1];
