@@ -35,6 +35,70 @@ int addvect(vect v){
     return 0;
 }
 
+// Load vectors from a CSV file
+void load_file(const char *filename){
+    FILE *fp= fopen(filename,"r");
+    if (!fp){
+        printf("Error: Could not open file '%s'\n", filename);
+        return;
+    }
+
+    char line[128];
+    int line_num = 0;
+    while (fgets(line, sizeof(line), fp)){
+        line_num++;
+
+        // Skip empty lines
+        if (strlen(line) <= 1) continue;
+
+        // Remove newline characters
+        line[strcspn(line, "\r\n")] = 0;
+
+        char name[16];
+        double x, y, z;
+
+        if (sscanf(line,"%15[^,],%lf,%lf,%lf",name, &x, &y, &z)== 4){
+            vect v;
+            strcpy(v.name, name);
+            v.comp[0] =x;
+            v.comp[1] =y;
+            v.comp[2] =z;
+            v.in_use =1;
+            addvect(v);
+        } else {
+            printf("Warning: Invalid format on line %d, skipped.\n", line_num);
+        }
+    }
+
+    fclose(fp);
+    printf("File '%s' loaded successfully.\n", filename);
+}
+
+// Save vectors to a CSV file
+void save_file(const char *filename) {
+    FILE *fp = fopen(filename, "w");
+    if (!fp) {
+        printf("Error: Could not open file '%s' for writing\n", filename);
+        return;
+    }
+
+    Node *current = head;
+    while (current) {
+        if (current->data.in_use) {
+            fprintf(fp, "%s,%.4f,%.4f,%.4f\n",
+                    current->data.name,
+                    current->data.comp[0],
+                    current->data.comp[1],
+                    current->data.comp[2]);
+        }
+        current = current->next;
+    }
+
+    fclose(fp);
+    printf("Vectors saved to '%s'\n", filename);
+}
+
+
 // Find a vector by name
 vect *findvect(char *name) {
     Node *current = head;
@@ -80,6 +144,8 @@ void print_help(){
     printf("  num * var     scalar multiply\n");
     printf("  clear         clears all vectors\n");
     printf("  list          lists all vectors\n");
+    printf("  load <file>   loads vectors from file\n");
+    printf("  save <file>   saves vectors to file\n");
     printf("  quit          exits program\n");
 }
 
@@ -116,6 +182,28 @@ void vector_console(){
 
         if (strcmp(line, "-h") == 0) {
             print_help();
+            continue;
+        }
+
+        //Handle load file
+        if(strncmp(line,"load ",5)==0){
+            char filename[64];
+            if (sscanf(line + 5, "%63s", filename) == 1){
+                load_file(filename);
+            } else {
+                printf("Usage: load <filename>\n");
+            }
+            continue;
+        }
+
+        //Save file using entered filename
+        if(strncmp(line,"save ",5)==0){
+            char filename[64];
+            if (sscanf(line + 5,"%63s",filename) ==1){
+                save_file(filename);
+            } else {
+                printf("Usage: save <filename>\n");
+            }
             continue;
         }
 
@@ -242,7 +330,7 @@ void vector_console(){
         }
 
         // Display vector
-        if (sscanf(line, "%15s", v1)==1){
+        if (sscanf(line,"%15s", v1)==1){
             vect *a = findvect(v1);
             if (!a)
                 printf("Vector %s not found.\n", v1);
@@ -250,6 +338,8 @@ void vector_console(){
                 printf("%s = %.2f %.2f %.2f\n",a->name, a->comp[0], a->comp[1], a->comp[2]);
             continue;
         }
+
+        
 
         // Error catch-all
         printf("Unknown command. Type -h for help screen.\n");
